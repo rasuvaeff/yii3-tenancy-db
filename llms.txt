@@ -1,0 +1,63 @@
+# yii3-tenancy-db
+
+Database tenant storage for rasuvaeff/yii3-tenancy: TenantProvider over a
+`tenants` table (yiisoft/db), optional PSR-16 read-through cache, bundled
+migration.
+
+## Install
+
+```bash
+composer require rasuvaeff/yii3-tenancy-db
+```
+
+## Rules
+
+- This backend is the ONE source binding `TenantProvider` in DI (the core
+  never binds it). Do not bind it again in the application when this package
+  is installed.
+- Invalid rows throw `InvalidTenantRowException` — never skipped or defaulted.
+- Only found tenants are cached; misses always hit the database, so new
+  tenants appear immediately. Cache failures are non-fatal.
+- Table columns: id string(64) PK, name string(190) default '', status
+  string(20) 'active'|'suspended', attributes text JSON object.
+
+## API reference
+
+### DbTenantProvider
+
+```php
+use Rasuvaeff\Yii3TenancyDb\DbTenantProvider;
+
+$provider = new DbTenantProvider(
+    db: $connection,        // Yiisoft\Db\Connection\ConnectionInterface
+    table: 'tenants',       // default
+);
+$provider->find('acme');    // ?Rasuvaeff\Yii3Tenancy\Tenant
+```
+
+### CachedTenantProvider (PSR-16 read-through)
+
+```php
+use Rasuvaeff\Yii3TenancyDb\CachedTenantProvider;
+
+$cached = new CachedTenantProvider(
+    inner: $provider,       // any TenantProvider
+    cache: $psr16,          // Psr\SimpleCache\CacheInterface
+    ttl: 60,                // seconds, default 60
+);
+$cached->find('acme');      // cache key: "yii3-tenancy-db.tenant.acme"
+$cached->forget('acme');    // invalidate after tenant update/suspension
+```
+
+### Migration
+
+`migrations/M260704000000CreateTenantsTable.php` (yiisoft/db-migration,
+global namespace, loaded via `sourcePaths`). Custom table name via
+constructor argument in DI.
+
+### DI (config-plugin)
+
+Ships config/di.php + config/params.php. Binds `TenantProvider` to
+`DbTenantProvider`, wrapped in `CachedTenantProvider` when
+`params['rasuvaeff/yii3-tenancy-db']['cache']['enabled']` is true (cache from
+container `CacheInterface`). Params: `table`, `cache.enabled`, `cache.ttl`.
