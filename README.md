@@ -7,6 +7,7 @@
 [![Psalm level](https://img.shields.io/badge/psalm-level%201-141F48?logo=psalm&logoColor=white)](https://github.com/rasuvaeff/yii3-tenancy-db/blob/master/psalm.xml)
 [![PHP](https://img.shields.io/packagist/dependency-v/rasuvaeff/yii3-tenancy-db/php)](https://packagist.org/packages/rasuvaeff/yii3-tenancy-db)
 [![License](https://img.shields.io/packagist/l/rasuvaeff/yii3-tenancy-db)](LICENSE.md)
+[Русская версия](README.ru.md)
 
 Database tenant storage for [rasuvaeff/yii3-tenancy](https://github.com/rasuvaeff/yii3-tenancy):
 `TenantProvider` backed by a `tenants` table via yiisoft/db, an optional PSR-16
