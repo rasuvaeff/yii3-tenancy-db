@@ -1,4 +1,5 @@
 # rasuvaeff/yii3-tenancy-db
+
 [![Stable Version](https://img.shields.io/packagist/v/rasuvaeff/yii3-tenancy-db?label=stable&sort_semver=1)](https://packagist.org/packages/rasuvaeff/yii3-tenancy-db)
 [![Total Downloads](https://img.shields.io/packagist/dt/rasuvaeff/yii3-tenancy-db)](https://packagist.org/packages/rasuvaeff/yii3-tenancy-db)
 [![Build](https://img.shields.io/github/actions/workflow/status/rasuvaeff/yii3-tenancy-db/build.yml?branch=master)](https://github.com/rasuvaeff/yii3-tenancy-db/actions)
@@ -6,24 +7,32 @@
 [![Psalm level](https://img.shields.io/badge/psalm-level%201-141F48?logo=psalm&logoColor=white)](https://github.com/rasuvaeff/yii3-tenancy-db/blob/master/psalm.xml)
 [![PHP](https://img.shields.io/packagist/dependency-v/rasuvaeff/yii3-tenancy-db/php)](https://packagist.org/packages/rasuvaeff/yii3-tenancy-db)
 [![License](https://img.shields.io/packagist/l/rasuvaeff/yii3-tenancy-db)](LICENSE.md)
-Database tenant storage for [rasuvaeff/yii3-tenancy](https://github.com/rasuvaeff/yii3-tenancy):
-TenantProvider, поддерживаемый таблицей tenants через yiisoft/db, дополнительным кэшем сквозного чтения PSR-16
- и готовой миграцией.
+[English version](README.md)
 
- > **Используете помощника по кодированию с использованием искусственного интеллекта?** [llms.txt](llms.txt) содержит компактную ссылку
- > API, которой вы можете поделиться с моделью. Авторы: см. [AGENTS.md](AGENTS.md). @@ЛИНИЯ@@
+БД-хранилище тенантов для [rasuvaeff/yii3-tenancy](https://github.com/rasuvaeff/yii3-tenancy):
+`TenantProvider` поверх таблицы `tenants` через yiisoft/db, опциональный
+read-through кэш PSR-16 и готовая миграция.
+
+> **Используете AI-ассистента?** В [llms.txt](llms.txt) — компактный
+> API-справочник, которым можно поделиться с моделью. Контрибьюторам: см.
+> [AGENTS.md](AGENTS.md).
+
 ## Требования
+
 | Требование | Версия |
- |-------------|---------|
- | PHP | 8,3 – 8,5 |
- | `rasuvaeff/yii3-tenancy` | `^1.0` |
- | `yiisoft/db` | `^2.0` |
- | `yiisoft/db-миграция` | `^2.0` (для комплексной миграции) | @@ЛИНИЯ@@
+|-------------|---------|
+| PHP | 8.3 – 8.5 |
+| `rasuvaeff/yii3-tenancy` | `^1.0` |
+| `yiisoft/db` | `^2.0` |
+| `yiisoft/db-migration` | `^2.0` (для bundled-миграции) |
+
 ## Установка
+
 ```bash
 composer require rasuvaeff/yii3-tenancy-db
 ```
-Зарегистрируйте путь миграции и запустите миграцию:
+
+Зарегистрируйте путь миграций и примените миграцию:
 
 ```php
 // config/params.php
@@ -31,13 +40,16 @@ composer require rasuvaeff/yii3-tenancy-db
     'sourcePaths' => [dirname(__DIR__) . '/vendor/rasuvaeff/yii3-tenancy-db/migrations'],
 ],
 ```
+
 ```bash
 ./yii migrate:up
 ```
+
 ## Использование
-При использовании `yiisoft/config` никаких подключений не требуется — этот пакет связывает
- `TenantProvider` с `DbTenantProvider` (ядро намеренно оставляет этот интерфейс
- несвязанным; установка ядра + этого бэкэнда просто работает):
+
+При наличии `yiisoft/config` никакой связки не требуется — пакет привязывает
+`TenantProvider` к `DbTenantProvider` (ядро намеренно оставляет этот интерфейс
+непривязанным; установка ядра + этого бэкенда работает из коробки):
 
 ```php
 use Rasuvaeff\Yii3Tenancy\CurrentTenant;
@@ -48,7 +60,8 @@ final readonly class InvoiceService
     // TenantResolutionMiddleware looks tenants up through DbTenantProvider
 }
 ```
-Ручное построение:
+
+Ручное конструирование:
 
 ```php
 use Rasuvaeff\Yii3TenancyDb\CachedTenantProvider;
@@ -60,11 +73,12 @@ $provider = new DbTenantProvider(db: $connection, table: 'tenants');
 $cached = new CachedTenantProvider(inner: $provider, cache: $psr16, ttl: 60);
 $cached->forget('acme');   // drop the entry after updating/suspending a tenant
 ```
-Семантика кэширования: кэшируются только **найденные** арендаторы (вновь созданный арендатор
- появляется немедленно); сбои чтения/записи кэша не являются фатальными; срок действия записей истекает
- по TTL или явному `forget()`.
 
- Включите кеш через параметры:
+Семантика кэширования: кэшируются только **найденные** тенанты (новосозданный
+тенант появляется сразу); ошибки чтения/записи кэша нефатальны; записи
+устаревают по TTL или через явный `forget()`.
+
+Включите кэш через params:
 
 ```php
 // config/params.php
@@ -75,40 +89,54 @@ return [
     ],
 ];
 ```
+
 ## Схема таблицы
-| Столбец | Тип | Заметки |
- |---|---|---|
- | `идентификатор` | `строка(64)` ПК | должен соответствовать основному `Tenant::isValidId()` |
- | `имя` | `строка(190)` | по умолчанию `''` |
- | `статус` | `строка(20)` | `активный` (по умолчанию) / `приостановленный` |
- | `атрибуты` | `текст` | Объект JSON, по умолчанию `'{}'` |
 
- Недопустимые строки (неизвестный статус, неверный формат JSON, неверный идентификатор) выдают
- `InvalidTenantRowException` — никогда не пропускаются автоматически и не по умолчанию. @@ЛИНИЯ@@
+| Колонка | Тип | Примечания |
+|---|---|---|
+| `id` | `string(64)` PK | должен удовлетворять ядровому `Tenant::isValidId()` |
+| `name` | `string(190)` | default `''` |
+| `status` | `string(20)` | `active` (по умолчанию) / `suspended` |
+| `attributes` | `text` | JSON-объект, default `'{}'` |
+
+Невалидные строки (неизвестный status, некорректный JSON, невалидный id) бросают
+`InvalidTenantRowException` — никогда не пропускаются молча и не дефолтятся.
+
 ## Компоненты
-| Класс | Роль |
- |---|---|
- | `DbTenantProvider` | `TenantProvider` через yiisoft/db: однострочный `find()` по первичному ключу |
- | `CachedTenantProvider` | Декоратор сквозного чтения PSR-16 (`yii3-tenancy-db.tenant.{key}`), `forget()`, аннулирование |
- | `Exception\InvalidTenantRowException` | выдается внутренним преобразователем строк для недопустимых строк | @@ЛИНИЯ@@
-## Безопасность
-— При поиске используются связанные параметры через построитель запросов yiisoft/db — без интерполяции строк SQL
-.
- — имя таблицы представляет собой конфигурацию (контролируется разработчиком), а не вводимые пользователем данные.
- — строки строго проверяются при чтении; поврежденная строка громко завершается с ошибкой вместо того, чтобы
- создавал полудействительный клиент. @@ЛИНИЯ@@
-## Примеры
-См. [examples/](examples/) для работоспособного сценария.
 
- | Скрипт | Шоу | Нужен сервер? |
- |--------|-------|:-------------:|
- | [`db-provider.php`](examples/db-provider.php) | Миграция + поиск + поиск в кэше в SQLite в памяти | нет | @@ЛИНИЯ@@
+| Класс | Роль |
+|---|---|
+| `DbTenantProvider` | `TenantProvider` поверх yiisoft/db: однострочный `find()` по primary key |
+| `CachedTenantProvider` | PSR-16 read-through декоратор (`yii3-tenancy-db.tenant.{key}`), инвалидация через `forget()` |
+| `Exception\InvalidTenantRowException` | бросается внутренним row-маппером на невалидные строки |
+
+## Безопасность
+
+- Поиск использует bound parameters через query builder yiisoft/db — без
+  SQL-строковой интерполяции.
+- Имя таблицы — это конфигурация (контролируется разработчиком), а не ввод
+  пользователя.
+- Строки строго валидируются при чтении; повреждённая строка громко падает
+  вместо того, чтобы породить полувалидного тенанта.
+
+## Примеры
+
+См. [examples/](examples/) — запускаемый скрипт.
+
+| Скрипт | Показывает | Нужен сервер? |
+|--------|-------|:-------------:|
+| [`db-provider.php`](examples/db-provider.php) | Миграция + поиск + кэшированный поиск на in-memory SQLite | нет |
+
 ## Разработка
-На хосте нет PHP/Composer — запустите в Docker через образ `composer:2`:
+
+На хосте нет PHP/Composer — запускайте через Docker-образ `composer:2`:
 
 ```bash
 docker run --rm -v "$PWD":/app -w /app composer:2 composer build
 ```
-Или с помощью Make: make build, make cs-fix, make psalm, make test. @@ЛИНИЯ@@
+
+Или через Make: `make build`, `make cs-fix`, `make psalm`, `make test`.
+
 ## Лицензия
-BSD-3-пункт. См. [LICENSE.md](LICENSE.md).
+
+BSD-3-Clause. См. [LICENSE.md](LICENSE.md).
