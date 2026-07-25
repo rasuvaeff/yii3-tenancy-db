@@ -31,18 +31,41 @@ read-through cache, and a ready-made migration.
 composer require rasuvaeff/yii3-tenancy-db
 ```
 
-Register the migrations path and run the migration:
+Register the bundled migration **by namespace** — no vendor paths:
 
 ```php
-// config/params.php
-'yiisoft/db-migration' => [
-    'sourcePaths' => [dirname(__DIR__) . '/vendor/rasuvaeff/yii3-tenancy-db/migrations'],
-],
+// config/common/di/migration.php
+use Yiisoft\Db\Migration\Service\MigrationService;
+
+return [
+    MigrationService::class => [
+        'setSourceNamespaces()' => [['App\\Migration', 'Rasuvaeff\\Yii3TenancyDb\\Migration']],
+    ],
+];
 ```
 
 ```bash
 ./yii migrate:up
 ```
+
+Set the table name in params — `config/di.php` turns it into a
+`TenantsTableName` that reaches the migration **and** `DbTenantProvider`:
+
+```php
+// config/common/params.php
+'rasuvaeff/yii3-tenancy-db' => [
+    'table' => 'my_tenants',
+    'table_prefix' => '',   // prepended to `table`; e.g. 'rsv_' → rsv_my_tenants
+],
+```
+
+> **Do not configure the migration through the DI container.**
+> `M...::class => ['__construct()' => ['table' => ...]]` does not work: the
+> migration is built by `Injector::make()`, which resolves arguments by type
+> and never reads a container definition keyed by the migration's own class.
+> Worse, adding that definition makes the container fatal at build time in
+> **every** request, because the class is not autoloadable until the migration
+> runner requires it. That recipe was documented in 1.x; it never worked.
 
 ## Usage
 

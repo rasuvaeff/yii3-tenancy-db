@@ -32,18 +32,41 @@ read-through кэш PSR-16 и готовая миграция.
 composer require rasuvaeff/yii3-tenancy-db
 ```
 
-Зарегистрируйте путь миграций и примените миграцию:
+Регистрируйте поставляемую миграцию **по namespace** — без путей в `vendor/`:
 
 ```php
-// config/params.php
-'yiisoft/db-migration' => [
-    'sourcePaths' => [dirname(__DIR__) . '/vendor/rasuvaeff/yii3-tenancy-db/migrations'],
-],
+// config/common/di/migration.php
+use Yiisoft\Db\Migration\Service\MigrationService;
+
+return [
+    MigrationService::class => [
+        'setSourceNamespaces()' => [['App\\Migration', 'Rasuvaeff\\Yii3TenancyDb\\Migration']],
+    ],
+];
 ```
 
 ```bash
 ./yii migrate:up
 ```
+
+Имя таблицы задаётся в params — `config/di.php` превращает его в
+`TenantsTableName`, который получают и миграция, и `DbTenantProvider`:
+
+```php
+// config/common/params.php
+'rasuvaeff/yii3-tenancy-db' => [
+    'table' => 'my_tenants',
+    'table_prefix' => '',   // добавляется перед `table`; например 'rsv_' → rsv_my_tenants
+],
+```
+
+> **Не настраивайте миграцию через DI-контейнер.**
+> `M...::class => ['__construct()' => ['table' => ...]]` не работает: миграцию
+> создаёт `Injector::make()`, который резолвит аргументы по типу и никогда не
+> читает определение контейнера по имени класса самой миграции. Хуже того,
+> добавление такого определения роняет контейнер на этапе сборки в **каждом**
+> запросе, потому что класс не автозагружается, пока его не подключит раннер
+> миграций. Этот рецепт был описан в 1.x и никогда не работал.
 
 ## Использование
 

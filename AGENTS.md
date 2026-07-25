@@ -43,6 +43,22 @@ Or with Make: `make build`, `make cs-fix`, `make psalm`, `make test`,
 
 ## Invariants & gotchas
 
+- **The table name is a VO, not a string, because `Injector` cannot resolve a
+  scalar.** `yiisoft/db-migration` builds migrations via `Injector::make()`,
+  which resolves arguments by name or by type and never reads a container
+  definition keyed by the migration's own class. That is why the 1.x recipe
+  `M...::class => ['__construct()' => ['table' => …]]` silently did nothing —
+  and why adding it made `Yiisoft\Di\Container` fatal at build time. Never
+  reintroduce a scalar `string $table` on a migration.
+- **One source of truth for the name.** `config/di.php` builds `TenantsTableName`
+  from `table_prefix` + `table` params and passes it to both the provider and
+  the migration.
+- Migrations live in `src/Migration/` and are therefore covered by cs, psalm and
+  infection. `MigrationTableNameTest` asserts the column set.
+- `composer test` runs only the Unit suite; `composer mutation` runs every
+  suite. An integration test left pointing at `migrations/` passes the first and
+  fails the second.
+- Identifier patterns are anchored with `\z`, not `$`.
 - **This backend is the ONE source binding `TenantProvider`** in
   `config/di.php` (core deliberately binds nothing) — one key, one vendor, no
   `yiisoft/config` `Duplicate key`. `ConfigWiringTest` guards the shape.
