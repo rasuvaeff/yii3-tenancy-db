@@ -51,7 +51,7 @@ $cached->forget('acme');    // invalidate after tenant update/suspension
 
 ### Migration
 
-`migrations/M260704000000CreateTenantsTable.php` (yiisoft/db-migration,
+`Rasuvaeff\Yii3TenancyDb\Migration\M260704000000CreateTenantsTable` (namespaced since 2.0; register with `setSourceNamespaces()`, table name via `TenantsTableName` from params) (yiisoft/db-migration,
 global namespace, loaded via `sourcePaths`). Custom table name via
 constructor argument in DI.
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3TenancyDb\Tests\Integration;
 
-use M260704000000CreateTenantsTable;
 use Rasuvaeff\Yii3Tenancy\TenantStatus;
 use Rasuvaeff\Yii3TenancyDb\CachedTenantProvider;
 use Rasuvaeff\Yii3TenancyDb\DbTenantProvider;
+use Rasuvaeff\Yii3TenancyDb\Migration\M260704000000CreateTenantsTable;
 use Testo\Assert;
 use Testo\Codecov\CoversNothing;
 use Testo\Lifecycle\AfterTest;
@@ -35,8 +35,6 @@ final class SqliteIntegrationTest
     #[BeforeTest]
     public function setUp(): void
     {
-        require_once dirname(__DIR__, 2) . '/migrations/M260704000000CreateTenantsTable.php';
-
         $driver = new SqliteDriver(dsn: 'sqlite::memory:');
         $schemaCache = new SchemaCache(psrCache: new MemorySimpleCache());
         $this->db = new SqliteConnection(driver: $driver, schemaCache: $schemaCache);

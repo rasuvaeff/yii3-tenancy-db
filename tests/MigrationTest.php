@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Rasuvaeff\Yii3TenancyDb\Tests;
 
-use M260704000000CreateTenantsTable;
 use Rasuvaeff\Yii3TenancyDb\DbTenantProvider;
+use Rasuvaeff\Yii3TenancyDb\Migration\M260704000000CreateTenantsTable;
+use Rasuvaeff\Yii3TenancyDb\TenantsTableName;
 use Testo\Assert;
 use Testo\Codecov\CoversNothing;
 use Testo\Lifecycle\AfterTest;
@@ -30,8 +31,6 @@ final class MigrationTest
     #[BeforeTest]
     public function setUp(): void
     {
-        require_once dirname(__DIR__) . '/migrations/M260704000000CreateTenantsTable.php';
-
         $driver = new SqliteDriver(dsn: 'sqlite::memory:');
         $schemaCache = new SchemaCache(psrCache: new MemorySimpleCache());
         $this->db = new SqliteConnection(driver: $driver, schemaCache: $schemaCache);
@@ -67,7 +66,7 @@ final class MigrationTest
 
     public function createsTableWithCustomName(): void
     {
-        (new M260704000000CreateTenantsTable(table: 'custom_tenants'))->up($this->builder);
+        (new M260704000000CreateTenantsTable(table: new TenantsTableName('custom_tenants')))->up($this->builder);
 
         Assert::notNull($this->db->getTableSchema('custom_tenants', true));
         Assert::null($this->db->getTableSchema('tenants', true));

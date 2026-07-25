@@ -14,13 +14,21 @@ use Yiisoft\Db\Query\Query;
  */
 final readonly class DbTenantProvider implements TenantProvider
 {
+    private string $table;
+
     /**
      * @param non-empty-string $table
+     *
+     * @throws \InvalidArgumentException when the name is not a valid identifier
      */
     public function __construct(
         private ConnectionInterface $db,
-        private string $table = 'tenants',
-    ) {}
+        string $table = 'tenants',
+    ) {
+        // validation lives in the value object, so the provider and the bundled
+        // migration cannot disagree about what a valid table name is
+        $this->table = (new TenantsTableName($table))->value;
+    }
 
     #[\Override]
     public function find(string $key): ?Tenant

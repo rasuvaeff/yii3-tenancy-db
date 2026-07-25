@@ -9,6 +9,7 @@ use Psr\SimpleCache\CacheInterface;
 use Rasuvaeff\Yii3Tenancy\TenantProvider;
 use Rasuvaeff\Yii3TenancyDb\CachedTenantProvider;
 use Rasuvaeff\Yii3TenancyDb\DbTenantProvider;
+use Rasuvaeff\Yii3TenancyDb\TenantsTableName;
 use Testo\Assert;
 use Testo\Codecov\CoversNothing;
 use Testo\Test;
@@ -39,9 +40,29 @@ final class ConfigWiringTest
         Assert::instanceOf($provider, CachedTenantProvider::class);
     }
 
-    public function diDefinesOnlyTenantProviderKey(): void
+    public function diDefinesOnlyItsOwnKeys(): void
     {
-        Assert::same(array_keys($this->di($this->defaultParams())), [TenantProvider::class]);
+        // TenantsTableName is this package's own type; the core binds neither it
+        // nor TenantProvider, so there is nothing for yiisoft/config to call a
+        // duplicate
+        Assert::same(
+            array_keys($this->di($this->defaultParams())),
+            [TenantsTableName::class, TenantProvider::class],
+        );
+    }
+
+    public function tableNameFactoryAppliesThePrefix(): void
+    {
+        $params = $this->defaultParams();
+        $params['rasuvaeff/yii3-tenancy-db']['table'] = 'custom_tenants';
+        $params['rasuvaeff/yii3-tenancy-db']['table_prefix'] = 'rsv_';
+
+        /** @var Closure $definition */
+        $definition = $this->di($params)[TenantsTableName::class];
+
+        /** @var TenantsTableName $table */
+        $table = $definition();
+        Assert::same($table->value, 'rsv_custom_tenants');
     }
 
     /**
@@ -65,8 +86,11 @@ final class ConfigWiringTest
         $db = new SqliteConnection(driver: $driver, schemaCache: new SchemaCache(psrCache: new MemorySimpleCache()));
         $container = new SimpleContainer([CacheInterface::class => new MemorySimpleCache()]);
 
+        /** @var Closure $tableDefinition */
+        $tableDefinition = $this->di($params)[TenantsTableName::class];
+
         /** @var TenantProvider */
-        return $definition($db, $container);
+        return $definition($db, $container, $tableDefinition());
     }
 
     /**
