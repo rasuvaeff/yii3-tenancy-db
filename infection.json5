@@ -8,6 +8,31 @@
         "summary": "build/infection-summary.log"
     },
     "testFramework": "testo",
+    // Exception\InvalidTenantRowException (ER-003 audit): TenantRowMapperTest
+    // now carries #[Covers(InvalidTenantRowException::class)] in addition to
+    // #[Covers(TenantRowMapper::class)] - attribution-only, throwsOnInvalidRow
+    // already exercised every throw site. Confirmed empirically: Total stayed
+    // at 39 mutants before and after (build/infection-summary.log identical) -
+    // the class is `final class InvalidTenantRowException extends
+    // RuntimeException {}`, a bare marker with zero mutable statements, so it
+    // generates zero mutants regardless of attribution.
+    //
+    // Three pre-existing escapes, unrelated to the above, out of scope here:
+    //  - DbTenantProvider.php:38 ArrayItemRemoval (`->where(['id' => $key])`
+    //    -> `->where([])`): no test asserts find() scopes by id when multiple
+    //    rows exist in the table.
+    //  - TenantRowMapper.php:69 Throw_ (drops `throw` from the malformed-JSON
+    //    branch, falls through to `if (!is_array($decoded))` which then
+    //    throws its own InvalidTenantRowException with the same exception
+    //    class and a different message): no test asserts the exact message
+    //    for malformed JSON, only the exception class.
+    //  - TenantRowMapper.php:80 CastString (`(string) $key` -> `$key` in the
+    //    attributes-JSON key loop): provably equivalent. PHP canonicalizes
+    //    any decimal-integer-looking array key to int on write regardless of
+    //    whether the assigned key is the int or its string form (verified:
+    //    `$a[(string) $k] = $v` and `$a[$k] = $v` produce `===`-identical
+    //    arrays for decoded keys "0", "7", "acme"), so the cast changes
+    //    nothing observable for any input - not a coverable gap.
     "minMsi": 85,
     "mutators": {
         "@default": true

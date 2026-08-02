@@ -18,6 +18,7 @@ use Testo\Test;
 
 #[Test]
 #[Covers(TenantRowMapper::class)]
+#[Covers(InvalidTenantRowException::class)]
 final class TenantRowMapperTest
 {
     public function mapsFullRow(): void
