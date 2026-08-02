@@ -10,7 +10,7 @@ a single row by primary key via the yiisoft/db `Query` builder and maps it to
 a core `Tenant` through the `@internal TenantRowMapper`.
 `CachedTenantProvider` is a PSR-16 read-through decorator with TTL and
 explicit `forget()` invalidation. A migration for `yiisoft/db-migration`
-ships in `migrations/`. Namespace: `Rasuvaeff\Yii3TenancyDb`.
+ships in `src/Migration/`. Namespace: `Rasuvaeff\Yii3TenancyDb`.
 
 Public API: `DbTenantProvider`, `CachedTenantProvider`,
 `Exception\InvalidTenantRowException`. `TenantRowMapper` is `@internal`.
@@ -75,9 +75,14 @@ Or with Make: `make build`, `make cs-fix`, `make psalm`, `make test`,
   `#[Covers(DbTenantProvider::class)]` — in-memory SQLite needs no service,
   and `#[CoversNothing]` integration tests generate ZERO mutants (known Testo
   gap). Do not move them to `tests/Integration`.
-- Migrations are global-namespace classes in `migrations/`, loaded by
-  `yiisoft/db-migration` via `sourcePaths`; custom table name is a constructor
-  argument bound in DI.
+- Migrations are `Rasuvaeff\Yii3TenancyDb\Migration` classes in `src/Migration/`;
+  the custom table name is a constructor argument bound in DI.
+  `setSourceNamespaces()` does NOT find them on any released
+  `yiisoft/db-migration` (≤ 2.0.1): it matches the PSR-4 map by string prefix,
+  so the namespace resolves into the core package and discovery silently finds
+  zero — `migrate:up` exits 0 having created nothing. Until an upstream release
+  carries the fix, migrations are applied directly via
+  `Injector::make($class)->up($builder)` — see the README.
 - Code: `declare(strict_types=1)`, `final readonly class`, `#[\Override]`,
   explicit types.
 - `examples/` is part of the public contract: keep scripts runnable and update
