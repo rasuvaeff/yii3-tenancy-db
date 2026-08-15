@@ -20,7 +20,7 @@ use InvalidArgumentException;
  *
  * @api
  */
-final readonly class TenantsTableName
+final readonly class TenantsTableName implements \Stringable
 {
     private const string PATTERN = '/^[A-Za-z_]\w*(\.[A-Za-z_]\w*)?\z/';
 
@@ -32,6 +32,7 @@ final readonly class TenantsTableName
         }
     }
 
+    #[\Override]
     public function __toString(): string
     {
         return $this->value;

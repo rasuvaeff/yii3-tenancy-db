@@ -24,10 +24,10 @@ use Yiisoft\Db\Migration\TransactionalMigrationInterface;
  *
  * @api
  */
-final class M260704000000CreateTenantsTable implements RevertibleMigrationInterface, TransactionalMigrationInterface
+final readonly class M260704000000CreateTenantsTable implements RevertibleMigrationInterface, TransactionalMigrationInterface
 {
     public function __construct(
-        private readonly TenantsTableName $table = new TenantsTableName(),
+        private TenantsTableName $table = new TenantsTableName(),
     ) {}
 
     #[\Override]
