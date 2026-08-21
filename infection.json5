@@ -33,7 +33,7 @@
     //    `$a[(string) $k] = $v` and `$a[$k] = $v` produce `===`-identical
     //    arrays for decoded keys "0", "7", "acme"), so the cast changes
     //    nothing observable for any input - not a coverable gap.
-    "minMsi": 85,
+    "minMsi": 89,
     "mutators": {
         "@default": true
     }
