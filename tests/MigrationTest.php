@@ -72,6 +72,35 @@ final class MigrationTest
         Assert::null($this->db->getTableSchema('tenants', true));
     }
 
+    /**
+     * MySQL rejects a literal DEFAULT on a TEXT column with error 1101, which
+     * aborted `migrate:up` before the table existed. SQLite tolerates it, so
+     * only an assertion on the column itself keeps the default from returning.
+     */
+    public function attributesColumnCarriesNoLiteralDefault(): void
+    {
+        (new M260704000000CreateTenantsTable())->up($this->builder);
+
+        $attributes = $this->db->getTableSchema('tenants', true)?->getColumn('attributes');
+
+        Assert::notNull($attributes);
+        Assert::null($attributes->getDefaultValue());
+        Assert::notSame($attributes->isNotNull(), true);
+    }
+
+    public function rowWithoutAttributesReadsAsAnEmptyAttributeSet(): void
+    {
+        (new M260704000000CreateTenantsTable())->up($this->builder);
+
+        $this->db->createCommand(
+            sql: "INSERT INTO tenants (id, name, status) VALUES ('acme', 'Acme Inc', 'active')",
+        )->execute();
+
+        $tenant = (new DbTenantProvider(db: $this->db))->find('acme');
+
+        Assert::same($tenant?->attributes, []);
+    }
+
     public function migratedTableIsReadableByProvider(): void
     {
         (new M260704000000CreateTenantsTable())->up($this->builder);

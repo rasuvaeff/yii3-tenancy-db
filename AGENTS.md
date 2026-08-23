@@ -43,6 +43,31 @@ Or with Make: `make build`, `make cs-fix`, `make psalm`, `make test`,
 
 ## Invariants & gotchas
 
+- **Never put a literal `DEFAULT` on a TEXT column.** MySQL and MariaDB reject
+  it outright (error 1101, `BLOB, TEXT, GEOMETRY or JSON column can't have a
+  default value`); PostgreSQL and SQLite accept it, so it only ever surfaces on
+  MySQL — and it surfaces as a `migrate:up` that creates nothing at all.
+  `attributes` carried `DEFAULT '{}'` and was **edited in place** rather than
+  patched by a follow-up migration: `yiisoft/db-migration` records only the
+  migration *name* in its history table, never a checksum, so an installation
+  that already applied the file never re-reads its body; on PostgreSQL/SQLite
+  the only divergence is a column default nothing reads, and on MySQL nothing
+  was ever applied, so there is no state to diverge from.
+- **`attributes` is nullable on purpose.** No code in this package writes the
+  table — every insert is the consumer's — so a `NOT NULL` column without a
+  default would break every insert that omits it. `TenantRowMapper` reads a
+  missing or `NULL` value as an empty attribute set.
+- **`CrossDatabaseMigrationTest` is the only place the DDL meets a real
+  engine.** Everything else runs on SQLite, which accepts DDL MySQL rejects.
+  Locally: start MySQL/PostgreSQL containers matching the `database-integration`
+  job (db and password `tenancy`), then
+  `TENANCY_TEST_DB=mysql vendor/bin/testo --suite=Integration` in a PHP image
+  that has `pdo_mysql`/`pdo_pgsql` — the plain `composer:2` image has neither.
+  `MigrationTest::attributesColumnCarriesNoLiteralDefault` is the cheap guard
+  that runs on every PR without containers.
+- **`database-integration` is deliberately ungated.** A matrix job skipped by
+  the `changes` filter reports one check under the raw, unexpanded name.
+
 - **The table name is a VO, not a string, because `Injector` cannot resolve a
   scalar.** `yiisoft/db-migration` builds migrations via `Injector::make()`,
   which resolves arguments by name or by type and never reads a container

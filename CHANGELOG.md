@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- The bundled migration could not be applied on MySQL or MariaDB: `attributes` was declared `text NOT NULL DEFAULT '{}'`, and those engines reject a literal `DEFAULT` on a TEXT column outright (error 1101), so `migrate:up` aborted having created nothing ([#15](https://github.com/rasuvaeff/yii3-tenancy-db/issues/15)). The column is now `text NULL` with no database default; nothing in this package writes the table, and `TenantRowMapper` already reads a missing or `NULL` value as an empty attribute set. Tables created by an earlier version keep working unchanged.
+
+### Added
+
+- A cross-driver integration test applies the migration against real MySQL and PostgreSQL servers (`TENANCY_TEST_DB=mysql|pgsql`, run by CI service containers), so DDL only SQLite tolerates cannot pass unnoticed again.
+
 ## 2.0.2 — 2026-08-04
 
 ### Fixed

@@ -39,7 +39,12 @@ final readonly class M260704000000CreateTenantsTable implements RevertibleMigrat
                 'id' => 'string(64) NOT NULL PRIMARY KEY',
                 'name' => "string(190) NOT NULL DEFAULT ''",
                 'status' => "string(20) NOT NULL DEFAULT 'active'",
-                'attributes' => "text NOT NULL DEFAULT '{}'",
+                // no literal DEFAULT: MySQL rejects one on a TEXT column outright
+                // (error 1101), so the table was never created there. The column
+                // is nullable because nothing in this package writes the table —
+                // every insert is the consumer's, and TenantRowMapper reads a
+                // missing or NULL value as an empty attribute set.
+                'attributes' => 'text NULL',
             ],
         );
     }
