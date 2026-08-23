@@ -123,7 +123,7 @@ return [
 | `id` | `string(64)` PK | must satisfy core `Tenant::isValidId()` |
 | `name` | `string(190)` | default `''` |
 | `status` | `string(20)` | `active` (default) / `suspended` |
-| `attributes` | `text` | JSON object, default `'{}'` |
+| `attributes` | `text NULL` | JSON object; no database default — MySQL rejects a literal `DEFAULT` on a TEXT column (error 1101). A missing or `NULL` value reads as an empty attribute set |
 
 Invalid rows (unknown status, malformed JSON, invalid id) throw
 `InvalidTenantRowException` — never silently skipped or defaulted.

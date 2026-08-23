@@ -124,7 +124,7 @@ return [
 | `id` | `string(64)` PK | должен удовлетворять ядровому `Tenant::isValidId()` |
 | `name` | `string(190)` | default `''` |
 | `status` | `string(20)` | `active` (по умолчанию) / `suspended` |
-| `attributes` | `text` | JSON-объект, default `'{}'` |
+| `attributes` | `text NULL` | JSON-объект; без database default — MySQL запрещает литеральный `DEFAULT` на TEXT-колонке (ошибка 1101). Отсутствующее или `NULL` значение читается как пустой набор атрибутов |
 
 Невалидные строки (неизвестный status, некорректный JSON, невалидный id) бросают
 `InvalidTenantRowException` — никогда не пропускаются молча и не дефолтятся.

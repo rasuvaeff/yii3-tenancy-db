@@ -19,7 +19,8 @@ composer require rasuvaeff/yii3-tenancy-db
 - Only found tenants are cached; misses always hit the database, so new
   tenants appear immediately. Cache failures are non-fatal.
 - Table columns: id string(64) PK, name string(190) default '', status
-  string(20) 'active'|'suspended', attributes text JSON object.
+  string(20) 'active'|'suspended', attributes text NULL JSON object (no
+  database default: MySQL forbids one on TEXT; NULL reads as []).
 
 ## API reference
 
