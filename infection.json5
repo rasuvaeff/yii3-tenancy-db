@@ -17,6 +17,9 @@
     // RuntimeException {}`, a bare marker with zero mutable statements, so it
     // generates zero mutants regardless of attribution.
     //
+    // Re-measured with --with-uncovered and the template mutator settings
+    // (2026-11-01): 41 mutants, 2 ignored, 3 escaped, 0 not covered, MSI 92%.
+    //
     // Three pre-existing escapes, unrelated to the above, out of scope here:
     //  - DbTenantProvider.php:38 ArrayItemRemoval (`->where(['id' => $key])`
     //    -> `->where([])`): no test asserts find() scopes by id when multiple
@@ -35,6 +38,24 @@
     //    nothing observable for any input - not a coverable gap.
     "minMsi": 89,
     "mutators": {
-        "@default": true
+        "@default": true,
+        // Constructor/method parameter declarations with a default value
+        // (`private int $x = 100,`, `bool $strict = false,`): the mutant sits on a
+        // signature line with no executable opcode under pcov, so it is reported Not
+        // Covered whatever the tests do. Only a type-prefixed `$name = default,` line
+        // matches; a body line cannot (no type before the variable). Do NOT add ^ or $:
+        // Infection wraps the pattern as ^-\s*REGEX$ over the removed diff line.
+        // Verified 2026-11-01 by diffing the survivor lists with and without it:
+        // bulkhead 6, circuit-breaker 13, json-ld 19 mutants removed, all of them
+        // such signature lines; Escaped and Timed Out unchanged.
+        "global-ignoreSourceCodeByRegex": [
+            "(?:(?:private|protected|public|readonly)\\s+)*\\??[A-Za-z_\\\\][\\w\\\\|]*\\s+\\$\\w+\\s*=\\s*[^,;]+,"
+        ],
+        // Off: with --with-uncovered a PublicVisibility mutant sits on a parameterless
+        // method's signature line, which has no executable opcode under pcov/xdebug,
+        // so it is reported Not Covered and can never be killed, whatever #[Covers]
+        // says. Measured on pinned-http-client 2026-11-01: 4 of 4 such mutants were
+        // Not Covered, none killed.
+        "PublicVisibility": false
     }
 }
