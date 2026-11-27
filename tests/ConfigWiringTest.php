@@ -70,7 +70,7 @@ final class ConfigWiringTest
      */
     private function defaultParams(): array
     {
-        return require dirname(__DIR__) . '/config/params.php';
+        return require __DIR__ . '/../config/params.php';
     }
 
     /**
@@ -99,6 +99,6 @@ final class ConfigWiringTest
      */
     private function di(array $params): array
     {
-        return (static fn(array $params): array => require dirname(__DIR__) . '/config/di.php')($params);
+        return (static fn(array $params): array => require __DIR__ . '/../config/di.php')($params);
     }
 }
