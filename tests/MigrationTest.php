@@ -85,7 +85,7 @@ final class MigrationTest
 
         Assert::notNull($attributes);
         Assert::null($attributes->getDefaultValue());
-        Assert::notSame($attributes->isNotNull(), true);
+        Assert::notSame($attributes->isNotNull(), expected: true);
     }
 
     public function rowWithoutAttributesReadsAsAnEmptyAttributeSet(): void
